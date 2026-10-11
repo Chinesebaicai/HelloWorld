@@ -590,18 +590,25 @@ on(EVENT_NAMES.request, ({ source, action, info } = {}) => {
   return apis[source].musicUrl(info.musicInfo, info.type).catch(e => Promise.reject(e.message));
 });
 
-send(EVENT_NAMES.inited, { openDevTools: false, sources });
-
+send(EVENT_NAMES.inited, { openDevTools: false, sources }
 const CHECK_URL = 'https://cdn.jsdelivr.net/gh/Chinesebaicai/HelloWorld@main/update.json';
-const UPDATE_URL = 'https://cdn.jsdelivr.net/gh/Chinesebaicai/HelloWorld@main/HelloWorld260925.js';
-const SCRIPT_VERSION = '261011';
+const UPDATE_URL = 'https://cdn.jsdelivr.net/gh/Chinesebaicai/HelloWorld@main/HelloWorld261011.js';
+
+const compareVersion = (a, b) => {
+  if (typeof a !== 'string' || typeof b !== 'string') return 0;
+  return b.replace(/^v/, '').localeCompare(a.replace(/^v/, ''), undefined, { numeric: true });
+};
 
 const checkLatestVersion = async () => {
   try {
     const resp = await httpRequest(CHECK_URL, { timeout: 5000 });
     const data = typeof resp.body === 'string' ? JSON.parse(resp.body) : resp.body;
     if (!data || !data.latest) return;
-    if (data.latest !== SCRIPT_VERSION) {
+
+    const current = globalThis.lx.currentScriptInfo?.version || '';
+    if (!current) return;
+
+    if (compareVersion(current, data.latest) > 0) {
       send(EVENT_NAMES.updateAlert, {
         log: `发现新版本 ${data.latest}\n${data.log || ''}`,
         updateUrl: UPDATE_URL
